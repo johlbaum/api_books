@@ -15,7 +15,7 @@ class BookController extends AbstractController
     public function getAllBooks(BookRepository $bookRepository, SerializerInterface $serializer): JsonResponse
     {
         $bookList = $bookRepository->findAll();
-        $jsonBookList = $serializer->serialize($bookList, 'json');
+        $jsonBookList = $serializer->serialize($bookList, 'json', ['groups' => 'getBooks']); // On indique quel groupe on veut récupérer
 
         return new JsonResponse($jsonBookList, Response::HTTP_OK, [], true); //les données sérialisées, le code retour : ici Response::HTTP_OK  correspond au code 200, les headers, un true qui signifie que nous avons déjà sérialisé les données et qu’il n’y a donc plus de traitement à faire dessus.
     }
@@ -25,7 +25,7 @@ class BookController extends AbstractController
     {
         $book = $bookRepository->find($id);
         if ($book) {
-            $jsonBook = $serializer->serialize($book, 'json');
+            $jsonBook = $serializer->serialize($book, 'json', ['groups' => 'getBooks']); // On indique quel groupe on veut récupérer
 
             return new JsonResponse($jsonBook, Response::HTTP_OK, [], true);
         }
