@@ -13,15 +13,15 @@ class Book
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['getBooks'])] // Permet d'éviter les références circulaires : spécifier quels champs on veut récupérer dans quel cas.
+    #[Groups(['getBooks', 'getAuthors'])] // Permet d'éviter les références circulaires : spécifier quels champs on veut récupérer dans quel cas.
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['getBooks'])]
+    #[Groups(['getBooks', 'getAuthors'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['getBooks'])]
+    #[Groups(['getBooks', 'getAuthors'])]
     private ?string $coverText = null;
 
     #[ORM\ManyToOne(inversedBy: 'books')]
