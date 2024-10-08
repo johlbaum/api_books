@@ -13,6 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class AuthorController extends AbstractController
 {
@@ -67,12 +68,19 @@ class AuthorController extends AbstractController
         SerializerInterface $serializerInterface,
         EntityManagerInterface $entityManager,
         UrlGeneratorInterface $urlGenerator,
-        Request $request
+        Request $request,
+        ValidatorInterface $validator
     ): JsonResponse {
         $jsonAuthor = $request->getContent();
 
         // Création d'un nouvel objet
         $author = $serializerInterface->deserialize($jsonAuthor, Author::class, 'json');
+
+        // On vérifie les erreurs
+        $errors = $validator->validate($author);
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializerInterface->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        }
 
         $entityManager->persist($author);
         $entityManager->flush();
@@ -94,7 +102,8 @@ class AuthorController extends AbstractController
         Request $request,
         SerializerInterface $serializerInterface,
         AuthorRepository $authorRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator
     ): JsonResponse {
         // Récupération de l'objet en base de données.
         $currentAuthor = $authorRepository->find($id);
@@ -109,6 +118,12 @@ class AuthorController extends AbstractController
             'json',
             [AbstractNormalizer::OBJECT_TO_POPULATE => $currentAuthor] // $context : tableau associatif qui fournit des informations supplémentaires pour la désérialisation. Cela permet de passer des options de contexte qui influencent le comportement du processus de désérialisation. En l'occurence, elle indique que l'on veut mettre à jour un objet existant (plutôt que d'en créer un nouveau à partir de zéro).
         );
+
+        // On vérifie les erreurs
+        $errors = $validator->validate($currentAuthor);
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializerInterface->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        }
 
         $entityManager->persist($updatedAuthor);
         $entityManager->flush();

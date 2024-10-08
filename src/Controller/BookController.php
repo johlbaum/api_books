@@ -14,6 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class BookController extends AbstractController
 {
@@ -71,7 +72,8 @@ class BookController extends AbstractController
         SerializerInterface $serializer,
         Request $request,
         UrlGeneratorInterface $urlGenerator,
-        AuthorRepository $authorRepository
+        AuthorRepository $authorRepository,
+        ValidatorInterface $validator
     ): JsonResponse {
 
         $jsonBook = $request->getContent();
@@ -92,6 +94,13 @@ class BookController extends AbstractController
         // On cherche l'auteur qui correspond et on l'assigne au livre.
         // Si "find" ne trouve pas l'auteur, alors null sera retourné.
         $book->setAuthor($authorRepository->find($idAuthor));
+
+        // On vérifie les erreurs
+        $errors = $validator->validate($book);
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+            //throw new HttpException(JsonResponse::HTTP_BAD_REQUEST, "La requête est invalide");
+        }
 
         $entityManager->persist($book);
         $entityManager->flush();
@@ -114,7 +123,8 @@ class BookController extends AbstractController
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         AuthorRepository $authorRepository,
-        BookRepository $bookRepository
+        BookRepository $bookRepository,
+        ValidatorInterface $validator
     ): JsonResponse {
         $currentBook = $bookRepository->find($id);
 
@@ -124,6 +134,13 @@ class BookController extends AbstractController
             'json', // $format
             [AbstractNormalizer::OBJECT_TO_POPULATE => $currentBook] // $context : tableau associatif qui fournit des informations supplémentaires pour la désérialisation. Cela permet de passer des options de contexte qui influencent le comportement du processus de désérialisation. En l'occurence, elle indique que l'on veut mettre à jour un objet existant (plutôt que d'en créer un nouveau à partir de zéro).
         );
+
+        // On vérifie les erreurs
+        $errors = $validator->validate($updatedBook);
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        }
+
         $content = $request->toArray();
         $idAuthor = $content['idAuthor'] ?? -1;
         $updatedBook->setAuthor($authorRepository->find($idAuthor));
