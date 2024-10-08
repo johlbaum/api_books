@@ -28,7 +28,7 @@ class Author
     /**
      * @var Collection<int, Book>
      */
-    #[ORM\OneToMany(targetEntity: Book::class, mappedBy: 'author')]
+    #[ORM\OneToMany(targetEntity: Book::class, mappedBy: 'author', cascade: ['remove'])] // Cascade : cela indique à Doctrine que si un Author est supprimé, tous les Book associés doivent également être supprimés.
     #[Groups(['getAuthors'])]
     private Collection $books;
 

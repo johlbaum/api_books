@@ -65,7 +65,7 @@ class BookController extends AbstractController
     /**
      * Méthode pour ajouter un livre
      */
-    #[Route('/api/books', name: "createBook", methods: ['POST'])]
+    #[Route('/api/books', name: "app_createBook", methods: ['POST'])]
     public function addBook(
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
@@ -73,8 +73,15 @@ class BookController extends AbstractController
         UrlGeneratorInterface $urlGenerator,
         AuthorRepository $authorRepository
     ): JsonResponse {
+
         $jsonBook = $request->getContent();
-        $book = $serializer->deserialize($jsonBook, Book::class, 'json'); // Hydrater tous les champs de l'objet en fonction du JSON fourni. Arguments : 1) Les données à transformer 2) La classe vers laquelle on veut transformer (ou désérialiser) les données. 3) Format des données d'entrée
+
+        // Un nouvel objet de la classe Book est créé.
+        $book = $serializer->deserialize(
+            $jsonBook,
+            Book::class, // Indique que les données JSON seront mappées à une instance de la classe Book. Le Serializer utilise les données JSON pour "peupler" les propriétés de l'objet cible.
+            'json'
+        );
 
         // Récupération de l'ensemble des données envoyées sous forme de tableau
         $content = $request->toArray();
@@ -91,7 +98,7 @@ class BookController extends AbstractController
 
         $jsonBook = $serializer->serialize($book, 'json', ['groups' => 'getBooks']);
 
-        // On générere la route qui pourrait être utilisée pour récupérer des informations sur le livre ainsi créé.
+        // On générere la route qui pourrait être utilisée pour récupérer des informations sur le livre créé.
         $location = $urlGenerator->generate('app_detail_book', ['id' => $book->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         return new JsonResponse($jsonBook, Response::HTTP_CREATED, ["Location" => $location], true); // On place la route générée dans le header. Cette URL pourrait être interrogée si on voulait avoir plus d’informations sur l’élément créé.
@@ -100,7 +107,7 @@ class BookController extends AbstractController
     /**
      * Méthode pour mettre à jour un livre.
      */
-    #[Route('/api/books/{id}', name: "updateBook", methods: ['PUT'])]
+    #[Route('/api/books/{id}', name: "app_updateBook", methods: ['PUT'])]
     public function updateBook(
         $id,
         Request $request,
